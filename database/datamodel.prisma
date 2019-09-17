@@ -1,0 +1,5 @@
+type Measurement {
+  id: ID! @id
+  createdAt: DateTime! @createdAt
+  value: Int!
+}

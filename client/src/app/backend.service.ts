@@ -4,6 +4,7 @@ import { Measurement } from './.models/measurement.model';
 import gql from 'graphql-tag';
 import { Subscription, BehaviorSubject } from 'rxjs';
 
+
 const MEASUREMENT_SUBSCRIPTION = gql`
 subscription {
   measurement {
@@ -26,6 +27,16 @@ const MEASUREMENTS_QUERY = gql`
   }
 `;
 
+const MEASUREMENT_COUNT = gql`
+query {
+  measurementsConnection {
+    aggregate {
+      count
+    }
+  }
+}
+`;
+
 interface SubDTO {
   measurement: {
     node: {
@@ -36,12 +47,26 @@ interface SubDTO {
   };
 }
 
+interface PageDTO {
+  measurements: Measurement[];
+}
+
 interface InitDTO {
   measurements: Measurement[];
 }
+
+interface CountDTO {
+  measurementsConnection: {
+    aggregate: {
+      count: number;
+    }
+  };
+}
+
+
 /**
  * This service has been rewritten to accomodate pipes better.
- * Object.Assign is used to leverage better use of being able to use Pure Pipes. Pure pipes have better performance by definition.
+ * Object.Assign is used to leverage better use of being able to use Pure Pipes. Pure pipes have better performance.
  *
  * If datasets grow into the tens-of-thousands of records this service might require an update to handle information caching better.
  * The dataSet gets replicated to different subscribers which can lead to memory issues.
@@ -53,41 +78,72 @@ interface InitDTO {
 export class BackendService {
 
   private _measurements = new BehaviorSubject<Measurement[]>([]);
-  private dataStore: { measurements: Measurement[] } = { measurements: [] };
-  readonly measurements = this._measurements.asObservable();
+  private _measurementsPaged = new BehaviorSubject<Measurement[]>([]);
+  private _measurementCount = new BehaviorSubject<number>(0);
 
-  initialData: Subscription;
+  private dataStore: {
+    measurements: Measurement[],
+    paged: Measurement[],
+    count: number,
+   } = { measurements: [], paged: [], count: 0 };
+
+  readonly measurements = this._measurements.asObservable();
+  readonly pagedMeasurements = this._measurementsPaged.asObservable();
+  readonly count = this._measurementCount.asObservable();
+
+  private initialData$: Subscription;
+  private liveData$: Subscription;
+  private pagedData$: Subscription;
+  private count$: Subscription;
 
 
   constructor(private apollo: Apollo) {
 
-    this.initialData = this.apollo.watchQuery({
+    this.initialData$ = this.apollo.watchQuery({
       query: MEASUREMENTS_QUERY,
     }).valueChanges.subscribe(result => {
       const _in = result.data as InitDTO;
+      // console.log(`BACKEND::${_in.measurementsConnection.aggregate.count}`);
       if (result.errors) {
         console.error(`ERROR IN BACKEND SERVICE\n\n${result.errors}`);
       } else {
-        // console.log('cache grab');
         this.dataStore.measurements = _in.measurements;
         this._measurements.next(Object.assign({}, this.dataStore).measurements);
       }
-      this.initialData.unsubscribe();
+      this.initialData$.unsubscribe();
     });
 
-    this.apollo.subscribe({
+    this.liveData$ = this.apollo.subscribe({
       query: MEASUREMENT_SUBSCRIPTION
     }).subscribe(({ data }) => {
       const _in = data as SubDTO;
-      // this.measurements.push(_in.measurement.node as Measurement);
       this.dataStore.measurements.push(_in.measurement.node as Measurement);
       this._measurements.next(Object.assign({}, this.dataStore).measurements);
     });
+
+    this.doCount();
   }
 
   pushCache(): void {
     return this._measurements.next(Object.assign({}, this.dataStore).measurements);
   }
+
+  doCount(): void {
+    this.count$ = this.apollo.subscribe({
+      query: MEASUREMENT_COUNT
+    }).subscribe(({ data }) => {
+      const _in = data as CountDTO;
+      this.dataStore.count = _in.measurementsConnection.aggregate.count;
+      this._measurementCount.next(Object.assign({}, this.dataStore).count);
+    });
+  }
+
+  // live(): Observable<Measurement[]> {
+  //   const ob = new Observable<Measurement[]>(() => {
+  //     this.dataStore.measurements.slice(this.dataStore.measurements.length - 60);
+  //   });
+  //   return ob;
+  // }
 
   // get measurements() {
   //   return this._measurements.asObservable();

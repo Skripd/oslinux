@@ -1,10 +1,10 @@
-import { Component, OnInit, ViewEncapsulation, ViewChild, OnDestroy } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, ViewChild, OnDestroy, Input } from '@angular/core';
 import { ChartDataSets, ChartOptions } from 'chart.js';
 import { Label, Color, BaseChartDirective } from 'ng2-charts';
 import * as pluginAnnotations from 'chartjs-plugin-annotation';
 import { BackendService } from '../backend.service';
-import { Measurement } from '../.models/measurement.model';
 import { Subscription } from 'rxjs';
+import * as _ from 'lodash';
 
 @Component({
   selector: 'app-line-chart',
@@ -35,6 +35,10 @@ export class LineChartComponent implements OnInit, OnDestroy {
         {
           id: 'y-axis-0',
           position: 'left',
+          ticks: {
+            suggestedMin: 0,
+            suggestedMax: 1000,
+          }
         },
         // {
         //   id: 'y-axis-1',
@@ -100,35 +104,47 @@ export class LineChartComponent implements OnInit, OnDestroy {
   'July', 'August', 'September', 'October', 'November', 'December'];
 
   @ViewChild(BaseChartDirective, { static: true }) chart: BaseChartDirective;
-  live: Subscription;
+
+  live$: Subscription;
+  ranged$: Subscription;
 
   constructor(private backend: BackendService) { }
 
   ngOnInit() {
-    this.live = this.backend.measurements.subscribe(rs => {
+    this.setupLive();
+    // this.ranged$ = this.backend.live();
+  }
+
+  setupLive(): void {
+    // this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
+    this.live$ = this.backend.measurements.subscribe(rs => {
+      const live = _.takeRight(rs, 60);
       const p: number[] = [];
       const l: string[] = [];
-      rs.forEach(m => {
+      // console.log(JSON.stringify(live));
+      live.forEach(m => {
         p.push(m.value);
-        l.push(this.monthNames[new Date(m.createdAt).getSeconds()]);
+        l.push(`${new Date(m.createdAt).getSeconds()}`);
       });
       Object.assign(this.measurements, p);
       Object.assign(this.lineChartLabels, l);
     });
   }
 
-  public randomize(): void {
-    for (let i = 0; i < this.lineChartData.length; i++) {
-      for (let j = 0; j < this.lineChartData[i].data.length; j++) {
-        this.lineChartData[i].data[j] = this.generateNumber(i);
-      }
-    }
-    this.chart.update();
-  }
+  // setupRanged(): void {
+  //   this.live$ === undefined ? null : this.ranged$.unsubscribe();
 
-  private generateNumber(i: number) {
-    return Math.floor((Math.random() * (i < 2 ? 100 : 1000)) + 1);
-  }
+  //   this.ranged$ = this.backend.measurements.subscribe(rs => {
+  //     const p: number[] = [];
+  //     const l: string[] = [];
+  //     rs.forEach(m => {
+  //       p.push(m.value);
+  //       l.push(this.monthNames[new Date(m.createdAt).getSeconds()]);
+  //     });
+  //     Object.assign(this.measurements, p);
+  //     Object.assign(this.lineChartLabels, l);
+  //   });
+  // }
 
   // events
   public chartClicked({ event, active }: { event: MouseEvent, active: {}[] }): void {
@@ -144,15 +160,6 @@ export class LineChartComponent implements OnInit, OnDestroy {
     this.chart.hideDataset(1, !isHidden);
   }
 
-  public pushOne() {
-    this.lineChartData.forEach((x, i) => {
-      const num = this.generateNumber(i);
-      const data: number[] = x.data as number[];
-      data.push(num);
-    });
-    this.lineChartLabels.push(`Label ${this.lineChartLabels.length}`);
-  }
-
   public changeColor() {
     this.lineChartColors[2].borderColor = 'green';
     this.lineChartColors[2].backgroundColor = `rgba(0, 255, 0, 0.3)`;
@@ -164,6 +171,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.live.unsubscribe();
+    this.live$ === undefined ? null : this.live$.unsubscribe();
+    this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
   }
 }

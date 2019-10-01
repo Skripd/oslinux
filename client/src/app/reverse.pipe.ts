@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { Measurement } from './.models/measurement.model';
+import * as _ from 'lodash';
 
 @Pipe({
   name: 'reverse',
@@ -8,7 +9,7 @@ import { Measurement } from './.models/measurement.model';
 export class ReversePipe implements PipeTransform {
 
   transform(value: Measurement[]): any {
-    return value.reverse();
+    return _.reverse(value);
   }
 
 }

@@ -1,9 +1,9 @@
-<clr-datagrid>
+<clr-datagrid (clrDgRefresh)="refresh($event)" [clrDgLoading]="loading">
     <clr-dg-column>ID</clr-dg-column>
     <clr-dg-column>Creation Date</clr-dg-column>
     <clr-dg-column>Value</clr-dg-column>
 
-    <clr-dg-row *clrDgItems="let m of measurements | reverse">
+    <clr-dg-row *ngFor="let m of measurements | reverse">
         <clr-dg-cell>{{m.id}}</clr-dg-cell>
         <clr-dg-cell>{{m.createdAt | date:'medium'}}</clr-dg-cell>
         <clr-dg-cell>{{m.value}}</clr-dg-cell>
@@ -11,10 +11,10 @@
 
     <!-- <clr-dg-footer>{{measurements.length}} measurements</clr-dg-footer> -->
     <clr-dg-footer>
-        <clr-dg-pagination #pagination [clrDgPageSize]="20">
+        <clr-dg-pagination #pagination [clrDgTotalItems]="total" [clrDgPageSize]="20">
             <clr-dg-page-size [clrPageSizeOptions]="[10,20,50,100]">Measurements per page</clr-dg-page-size>
             {{pagination.firstItem + 1}} - {{pagination.lastItem + 1}}
-            of {{pagination.totalItems}} measurements
+            of {{total}} measurements
         </clr-dg-pagination>
     </clr-dg-footer>
 </clr-datagrid>

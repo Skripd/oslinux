@@ -9,6 +9,7 @@
 
 # dependencies
 /node_modules
+/client/node_modules
 
 # profiling files
 chrome-profiler-events*.json
@@ -44,3 +45,9 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Hue Sim
+/SteveyO-Hue-Emulator-0c562a9
+
+# database datafiles
+/database/data

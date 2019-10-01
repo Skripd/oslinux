@@ -9,6 +9,7 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 export class GraphPageComponent implements OnInit {
 
   loading = false;
+  live = true;
 
   dateForm = new FormGroup({
     startDate: new FormControl(),
@@ -20,11 +21,12 @@ export class GraphPageComponent implements OnInit {
   ngOnInit() {
   }
 
-  loadTest() {
-    this.loading = true;
-    setTimeout(() => {
-      this.loading = false;
-    }, 2500);
+  setLive() {
+    this.live = true;
+  }
+
+  setRanged() {
+    this.live = false;
   }
 
 }

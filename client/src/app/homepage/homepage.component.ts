@@ -1,43 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Measurement } from '../.models/measurement.model';
 import { Subscription } from 'rxjs';
-import { BackendService } from '../backend.service';
 import { ClrDatagridStateInterface } from '@clr/angular';
 import * as _ from 'lodash';
-import gql from 'graphql-tag';
 import { Apollo } from 'apollo-angular';
-
-const QUERY_PAGED = gql`
-query($before: String, $from: Int, $to: Int) {
-  measurements(before: $before, skip: $from, last: $to) {
-    id
-    createdAt
-    value
-  }
-}
-`;
-
-interface QueryPagedDTO {
-  measurements: Measurement[];
-}
-
-const QUERY_COUNT = gql`
-query {
-  measurementsConnection {
-    aggregate {
-      count
-    }
-  }
-}
-`;
-
-interface QueryCountDTO {
-  measurementsConnection: {
-    aggregate: {
-      count: number
-    }
-  };
-}
+import { QueryCountDTO, QueryPagedDTO } from '../.models/DTOS.model';
+import { QUERY_COUNT, QUERY_PAGED } from '../.models/queries';
 
 @Component({
   selector: 'app-homepage',

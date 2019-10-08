@@ -5,18 +5,32 @@
                 <span>Graph</span>
             </div>
             <div class="card-block">
-                <app-line-chart *ngIf="!loading"></app-line-chart>
-                <span *ngIf="loading" class="spinner spinner-lg">
-                        Loading...
-                </span>
+                <div class="flex">
+                    <div class="flex-item">
+                        <div style="display: block;">
+                            <canvas *ngIf="!chartLoading" baseChart  
+                                [datasets]="data" 
+                                [labels]="lineChartLabels"
+                                [options]="lineChartOptions" 
+                                [colors]="lineChartColors" 
+                                [legend]="lineChartLegend"
+                                [chartType]="lineChartType" 
+                                [plugins]="lineChartPlugins" 
+                                (chartHover)="chartHovered($event)"
+                                (chartClick)="chartClicked($event)">
+                            </canvas>
+                            <div *ngIf="chartLoading">
+                                <clr-spinner>Loading data</clr-spinner>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="card-footer">
+                <clr-progress-bar *ngIf="chartLoading" class="top" [clrValue]="chartLoadingProgress" [clrMax]="chartLoadingProgressMax" clrLoop="true"></clr-progress-bar>
                 <clr-button-group class="btn-primary">
                     <clr-button (click)="setLive()">Live</clr-button>
-                    <clr-button (click)="setRanged()">Range</clr-button>
-                    <!-- <clr-button [clrInMenu]="true">Assign</clr-button>
-                    <clr-button [clrInMenu]="true">Download</clr-button>
-                    <clr-button [clrInMenu]="true">Delete</clr-button> -->
+                    <clr-button (click)="setupRanged()">Range</clr-button>
                 </clr-button-group>
             </div>
         </div>
@@ -29,19 +43,19 @@
             </div>
             <div class="card-block">
                 <form clrForm [formGroup]="dateForm" novalidate>
-                    <h4>Starting Date</h4>
+                    <h4>Pick a Date</h4>
                     <clr-date-container>
                         <label for="startDateControl">Date</label>
                         <input id="startDateControl" type="date" clrDate formControlName="startDate" />
                     </clr-date-container>
                 </form>
-                <form clrForm [formGroup]="dateForm" novalidate>
+                <!-- <form clrForm [formGroup]="dateForm" novalidate>
                     <h4>End Date</h4>
                     <clr-date-container>
                         <label for="endDateControl">Date</label>
                         <input id="endDateControl" type="date" clrDate formControlName="endDate" />
                     </clr-date-container>
-                </form>
+                </form> -->
             </div>
         </div>
     </div>

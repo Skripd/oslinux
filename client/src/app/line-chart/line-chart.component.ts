@@ -1,10 +1,14 @@
-import { Component, OnInit, ViewEncapsulation, ViewChild, OnDestroy, Input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, ViewChild, OnDestroy, Input, AfterViewInit } from '@angular/core';
 import { ChartDataSets, ChartOptions } from 'chart.js';
 import { Label, Color, BaseChartDirective } from 'ng2-charts';
 import * as pluginAnnotations from 'chartjs-plugin-annotation';
-import { BackendService } from '../backend.service';
 import { Subscription } from 'rxjs';
+import { first } from 'rxjs/operators';
 import * as _ from 'lodash';
+import { Apollo } from 'apollo-angular';
+import { QUERY_PAGED, MEASUREMENT_SUBSCRIPTION } from '../.models/queries';
+import { QueryPagedDTO, SubDTO } from '../.models/DTOS.model';
+import { Measurement } from '../.models/measurement.model';
 
 @Component({
   selector: 'app-line-chart',
@@ -12,12 +16,7 @@ import * as _ from 'lodash';
   styleUrls: ['./line-chart.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class LineChartComponent implements OnInit, OnDestroy {
-  public lineChartData: ChartDataSets[] = [
-    { data: [65, 59, 80, 81, 56, 55, 40], label: 'Series A' },
-    { data: [28, 48, 40, 19, 86, 27, 90], label: 'Series B' },
-    { data: [180, 480, 770, 90, 1000, 270, 400], label: 'Series C', yAxisID: 'y-axis-1' }
-  ];
+export class LineChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   measurements: number[] = [];
 
@@ -26,7 +25,7 @@ export class LineChartComponent implements OnInit, OnDestroy {
   ];
 
   public lineChartLabels: Label[] = []; // ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
-  public lineChartOptions: (ChartOptions & { annotation: any }) = {
+  public lineChartOptions: (ChartOptions) = {
     responsive: true,
     scales: {
       // We use this empty structure as a placeholder for dynamic theming.
@@ -40,36 +39,10 @@ export class LineChartComponent implements OnInit, OnDestroy {
             suggestedMax: 1000,
           }
         },
-        // {
-        //   id: 'y-axis-1',
-        //   position: 'right',
-        //   gridLines: {
-        //     color: 'rgba(255,0,0,0.3)',
-        //   },
-        //   ticks: {
-        //     fontColor: 'red',
-        //   }
-        // }
       ]
     },
-    annotation: {
-      // annotations: [
-      //   {
-      //     type: 'line',
-      //     mode: 'vertical',
-      //     scaleID: 'x-axis-0',
-      //     value: 'March',
-      //     borderColor: 'orange',
-      //     borderWidth: 2,
-      //     label: {
-      //       enabled: true,
-      //       fontColor: 'orange',
-      //       content: 'LineAnno'
-      //     }
-      //   },
-      // ],
-    },
   };
+
   public lineChartColors: Color[] = [
     { // grey
       backgroundColor: 'rgba(148,159,177,0.2)',
@@ -105,73 +78,68 @@ export class LineChartComponent implements OnInit, OnDestroy {
 
   @ViewChild(BaseChartDirective, { static: true }) chart: BaseChartDirective;
 
+  initial$: Subscription;
   live$: Subscription;
-  ranged$: Subscription;
 
-  constructor(private backend: BackendService) { }
+  loading = false;
+
+  constructor(private apollo: Apollo) { }
 
   ngOnInit() {
-    this.setupLive();
-    // this.ranged$ = this.backend.live();
+    this.loading = true;
   }
 
-  setupLive(): void {
-    // this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
-    this.live$ = this.backend.measurements.subscribe(rs => {
-      const live = _.takeRight(rs, 60);
-      const p: number[] = [];
+  ngAfterViewInit(): void {
+    this.initial$ = this.apollo.subscribe({
+      query: QUERY_PAGED,
+      variables: { before: null, from: 0, to: 60 }
+    }).pipe(first()).subscribe(({ data }) => {
+      console.log('initial');
+      const _in = data as QueryPagedDTO;
+      const d: number[] = [];
       const l: string[] = [];
-      // console.log(JSON.stringify(live));
-      live.forEach(m => {
-        p.push(m.value);
+
+      _in.measurements.forEach(m => {
+        d.push(m.value);
         l.push(`${new Date(m.createdAt).getSeconds()}`);
       });
-      Object.assign(this.measurements, p);
+
+      Object.assign(this.measurements, d);
       Object.assign(this.lineChartLabels, l);
+      this.setupLive();
+      this.loading = false;
     });
   }
 
-  // setupRanged(): void {
-  //   this.live$ === undefined ? null : this.ranged$.unsubscribe();
+  setupLive(): void {
+    this.live$ = this.apollo.subscribe({
+      query: MEASUREMENT_SUBSCRIPTION
+    }).subscribe(({ data }) => {
+      const _in = data as SubDTO;
+      let d = this.measurements;
+      let l = this.lineChartLabels;
+      d.shift();
+      d.push(_in.measurement.node.value);
 
-  //   this.ranged$ = this.backend.measurements.subscribe(rs => {
-  //     const p: number[] = [];
-  //     const l: string[] = [];
-  //     rs.forEach(m => {
-  //       p.push(m.value);
-  //       l.push(this.monthNames[new Date(m.createdAt).getSeconds()]);
-  //     });
-  //     Object.assign(this.measurements, p);
-  //     Object.assign(this.lineChartLabels, l);
-  //   });
-  // }
+      l.shift();
+      l.push(`${new Date(_in.measurement.node.createdAt).getSeconds()}`);
+
+      Object.assign(this.lineChartLabels, l);
+      Object.assign(this.measurements, d);
+    });
+  }
 
   // events
   public chartClicked({ event, active }: { event: MouseEvent, active: {}[] }): void {
-    console.log(event, active);
+    // console.log(event, active);
   }
 
   public chartHovered({ event, active }: { event: MouseEvent, active: {}[] }): void {
     // console.log(event, active);
   }
 
-  public hideOne() {
-    const isHidden = this.chart.isDatasetHidden(1);
-    this.chart.hideDataset(1, !isHidden);
-  }
-
-  public changeColor() {
-    this.lineChartColors[2].borderColor = 'green';
-    this.lineChartColors[2].backgroundColor = `rgba(0, 255, 0, 0.3)`;
-  }
-
-  public changeLabel() {
-    this.lineChartLabels[2] = ['1st Line', '2nd Line'];
-    // this.chart.update();
-  }
-
   ngOnDestroy() {
     this.live$ === undefined ? null : this.live$.unsubscribe();
-    this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
+    this.initial$ === undefined ? null : this.initial$.unsubscribe();
   }
 }

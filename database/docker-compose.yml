@@ -1,11 +1,19 @@
 version: '3'
 services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
   prisma:
     image: prismagraphql/prisma:1.34
     restart: always
     ports:
       - '4466:4466'
     environment:
+      VIRTUAL_HOST: oslinux-prisma.localhost
+      VIRTUAL_PORT: 4466
       PRISMA_CONFIG: |
         port: 4466
         databases:

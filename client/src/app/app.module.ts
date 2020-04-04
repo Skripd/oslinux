@@ -23,6 +23,8 @@ import { GraphPageComponent } from './graph-page/graph-page.component';
 import { LineChartComponent } from './line-chart/line-chart.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { registerLocaleData } from '@angular/common';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { environment } from '../environments/environment';
 
 @NgModule({
   declarations: [
@@ -43,6 +45,7 @@ import { registerLocaleData } from '@angular/common';
     HttpLinkModule,
     ChartsModule,
     ReactiveFormsModule,
+    ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
   ],
   providers: [
     { provide: LOCALE_ID, useValue: 'en-NL' }

@@ -22,9 +22,9 @@ services:
       - '27017:27017'
     volumes:
       - mongo:/var/lib/mongo
-      - mongo-data:/data/db
-      - mongo-config:/data/configdb
+      - ./data/db:/data/db
+      - ./data/config:/data/configdb
 volumes:
   mongo: ~
-  mongo-data: ~
-  mongo-config: ~
+  mongo-data: "./data"
+  mongo-config: "./data/config"

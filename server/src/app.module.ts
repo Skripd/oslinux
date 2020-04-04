@@ -1,11 +1,19 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { MeasurementController } from './measurement/measurement.controller';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { GraphQLModule } from '@nestjs/graphql';
+import { GraphqlOptions } from './graphql.options';
+import { MeasurementResolver } from './oslinux-client/measurement/measurement.resolver';
 
 @Module({
-  imports: [],
-  controllers: [AppController, MeasurementController],
-  providers: [AppService],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    GraphQLModule.forRootAsync({
+      useClass: GraphqlOptions,
+    }),
+  ],
+  controllers: [],
+  providers: [MeasurementResolver],
 })
 export class AppModule {}

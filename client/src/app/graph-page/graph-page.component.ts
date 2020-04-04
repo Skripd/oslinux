@@ -12,6 +12,7 @@ import * as _ from 'lodash';
 
 import { QUERY_PAGED, MEASUREMENT_SUBSCRIPTION, QUERY_DAY } from '../.models/queries';
 import { QueryPagedDTO, SubDTO, QueryDayDTO } from '../.models/DTOS.model';
+import { IDTOWebWorker } from '../.models/DTOS.internal.model';
 
 @Component({
   selector: 'app-graph-page',
@@ -91,7 +92,12 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
   chartLoadingProgress = 0;
   chartLoadingProgressMax = 100;
 
-  constructor(private apollo: Apollo) { }
+  worker = new Worker('../app.worker', { type: 'module' });
+
+
+  constructor(private apollo: Apollo) {
+    this.setupWebWorker();
+   }
 
   ngOnInit() {
     this.chartLoading = true;
@@ -146,7 +152,7 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   setupRanged(startDate: string): void {
-    this.live$ === undefined ? null : this.live$.unsubscribe();
+    this.live$ === undefined ? console.log('LIVE$ IS NULL') : this.live$.unsubscribe();
 
     this.data[0].data.length = 0;
     this.lineChartLabels.length = 0;
@@ -162,37 +168,35 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       fetchPolicy: 'network-only'
     }).valueChanges.pipe(first()).subscribe(({ data }) => {
-      const _in = data as QueryDayDTO;
-      this.chartLoadingProgressMax = _in.measurementsConnection.aggregate.count;
-
-      const aggregrateSize = Math.floor(this.chartLoadingProgressMax / 100);
-      let aggregrator = 0;
-      let counter = 0;
-
-      const d: number[] = [];
-      const l: string[] = [];
-      _in.measurementsConnection.edges.forEach(({ node }) => {
-        counter++;
-        aggregrator += node.value;
-
-        if (counter === aggregrateSize) {
-          d.push(Math.floor(aggregrator / aggregrateSize));
-          l.push(`${new Date(node.createdAt).toLocaleTimeString()}`);
-          counter = 0;
-          aggregrator = 0;
-        }
-      });
-
-      Object.assign(this.data[0].data, d);
-      Object.assign(this.lineChartLabels, l);
-      this.chartLoading = false;
+      // const _in = data as QueryDayDTO;
+      // this.chartLoadingProgressMax = _in.measurementsConnection.aggregate.count;
+      this.worker.postMessage(data);
+      // this.chartLoading = false;
     });
   }
 
   setLive() {
-    this.ngAfterViewInit();
     this.data[0].data.length = 0;
     this.lineChartLabels.length = 0;
+    this.ngAfterViewInit();
+  }
+
+  setupWebWorker() {
+    if (typeof Worker !== 'undefined') {
+      // Create a new
+
+      this.worker.onmessage = ({ data }) => {
+        this.chartLoading = false;
+
+        const rs = data as IDTOWebWorker;
+        this.data[0].data = rs.data;
+        this.lineChartLabels = rs.labels;
+      };
+    } else {
+      // Web Workers are not supported in this environment.
+      // You should add a fallback so that your program still executes correctly.
+      console.warn('Web workers not supported');
+    }
   }
 
   // events

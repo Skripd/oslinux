@@ -1,11 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Measurement } from '../.models/measurement.model';
-import { Subscription } from 'rxjs';
 import { ClrDatagridStateInterface } from '@clr/angular';
+
 import * as _ from 'lodash';
-import { Apollo } from 'apollo-angular';
-import { QueryCountDTO, QueryPagedDTO } from '../.models/DTOS.model';
-import { QUERY_COUNT, QUERY_PAGED } from '../.models/queries';
+import { Measurement } from '../_models/measurement.model';
+import { GetMeasurementCountGQL, GetPageGQL } from '../generated/graphql';
 
 @Component({
   selector: 'app-homepage',
@@ -14,20 +12,20 @@ import { QUERY_COUNT, QUERY_PAGED } from '../.models/queries';
 })
 export class HomepageComponent implements OnInit, OnDestroy {
 
-  measurementSub: Subscription;
-  countSub: Subscription;
   measurements: Measurement[] = [];
   total: number;
 
   firstID: string = null;
   loading = false;
 
-  constructor(private apollo: Apollo) { }
+  constructor(
+    private readonly getCountService: GetMeasurementCountGQL,
+    private readonly getPagedService: GetPageGQL
+  ) { }
 
   ngOnInit() {
     this.loading = true;
     this.count();
-    // this.queryPaged(20);
   }
 
   refresh(state: ClrDatagridStateInterface) {
@@ -43,23 +41,40 @@ export class HomepageComponent implements OnInit, OnDestroy {
   }
 
   count(): void {
-    this.apollo.watchQuery({
-      query: QUERY_COUNT,
-    }).valueChanges.subscribe(({ data }) => {
-      const rs = data as QueryCountDTO;
-      this.total = rs.measurementsConnection.aggregate.count;
+    const self = this;
+    this.getCountService.fetch().subscribe({
+      next(rs) {
+        self.total = rs.data.measurementsConnection.aggregate.count;
+      },
+      error(err) {
+        console.error('Some error getting count. No handling yet.', err);
+      },
+      complete() {
+        console.log('Completed count query');
+      }
     });
   }
 
   queryPaged(setLastID: boolean, lastid: string, from?: number, to?: number): void {
-    this.apollo.watchQuery({
-      query: QUERY_PAGED,
-      variables: { before: lastid, from, to }
-    }).valueChanges.subscribe(({ data }) => {
-      const rs = data as QueryPagedDTO;
-      this.setMeasurements(rs.measurements);
-      if (setLastID) {
-        this.firstID = _.last(rs.measurements).id;
+    console.log(setLastID, lastid, from, to);
+
+    const self = this;
+    this.getPagedService.fetch({
+      before: lastid,
+      from,
+      to
+    }).subscribe({
+      next(rs) {
+        self.setMeasurements(rs.data.measurements);
+        if(setLastID) {
+          self.firstID = _.last(rs.data.measurements).id;
+        }
+      },
+      error(err) {
+        console.error('No error handling. Something with paged loading', err);
+      },
+      complete() {
+        console.log('Completed loading a page.');
       }
     });
   }

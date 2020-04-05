@@ -1,0 +1,6 @@
+query getLastMeasurements($last: Int!){
+  measurements(last: $last) {
+    createdAt
+    value
+  }
+}

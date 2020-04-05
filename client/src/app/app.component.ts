@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { KeycloakService } from 'keycloak-angular';
 
 @Component({
   selector: 'app-root',
@@ -10,4 +11,13 @@ export class AppComponent {
   showAlerts = false;
   showSubnav = false;
   showSidenav = true;
+
+  constructor(
+    private readonly kc: KeycloakService
+  ) { }
+
+  logout(): void {
+    this.kc.logout(window.location.origin + '/');
+  }
+
 }

@@ -1,18 +1,15 @@
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
-import { FormGroup, FormControl, Validators } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { ChartDataSets, ChartOptions } from 'chart.js';
 import * as pluginAnnotations from 'chartjs-plugin-annotation';
 import { Label, Color, BaseChartDirective } from 'ng2-charts';
 
-import { Subscription } from 'rxjs';
-import { Apollo } from 'apollo-angular';
-import { first } from 'rxjs/operators';
-import * as _ from 'lodash';
+import { GetLastMeasurementsGQL, SubscribeToNewMeasurementsGQL } from 'src/app/generated/graphql';
 
-import { QUERY_PAGED, MEASUREMENT_SUBSCRIPTION, QUERY_DAY } from '../.models/queries';
-import { QueryPagedDTO, SubDTO, QueryDayDTO } from '../.models/DTOS.model';
-import { IDTOWebWorker } from '../.models/DTOS.internal.model';
+import * as _ from 'lodash';
+import { map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-graph-page',
@@ -79,124 +76,123 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
   public lineChartType = 'line';
   public lineChartPlugins = [pluginAnnotations];
 
-  public monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'];
-
   @ViewChild(BaseChartDirective, { static: true }) chart: BaseChartDirective;
 
-  initial$: Subscription;
   live$: Subscription;
-  ranged$: Subscription;
 
   chartLoading = false;
   chartLoadingProgress = 0;
   chartLoadingProgressMax = 100;
 
-  worker = new Worker('../app.worker', { type: 'module' });
-
-
-  constructor(private apollo: Apollo) {
-    this.setupWebWorker();
-   }
+  constructor(
+    private readonly getInitialSetService: GetLastMeasurementsGQL,
+    private readonly susbscibeMeasurementService: SubscribeToNewMeasurementsGQL,
+  ) { }
 
   ngOnInit() {
-    this.chartLoading = true;
-    this.dateForm.get('startDate').valueChanges.subscribe(rs => {
-      this.setupRanged(_.reverse(rs.split('/')).join('-'));
-    });
+    // this.chartLoading = true;
+    // this.dateForm.get('startDate').valueChanges.subscribe(rs => {
+    //   this.setupRanged(_.reverse(rs.split('/')).join('-'));
+    // });
   }
 
   ngAfterViewInit(): void {
-    this.chartLoading = true;
+    Promise.resolve(this.chartLoading = true);
+    const self = this;
 
-    this.initial$ = this.apollo.subscribe({
-      query: QUERY_PAGED,
-      variables: { before: null, from: 0, to: 60 },
-      fetchPolicy: 'network-only',
-    }).pipe(first()).subscribe(({ data }) => {
-      const _in = data as QueryPagedDTO;
-      const d: number[] = [];
-      const l: string[] = [];
+    this.getInitialSetService.fetch({
+      last: 60
+    }, {
+      fetchPolicy: 'network-only'
+    }).subscribe({
+      next(rs) {
+         Object.assign(self.data[0].data, rs.data.measurements.map(x => x.value));
+         Object.assign(self.lineChartLabels, rs.data.measurements.map(x => `${new Date(x.createdAt).getSeconds()}`));
+         self.setupLive();
 
-      _in.measurements.forEach(m => {
-        d.push(m.value);
-        l.push(`${new Date(m.createdAt).getSeconds()}`);
-      });
-
-      Object.assign(this.data[0].data, d);
-      Object.assign(this.lineChartLabels, l);
-      this.setupLive();
-      this.chartLoading = false;
-      this.initial$.unsubscribe();
+         // handle with next cycle
+         Promise.resolve(self.chartLoading = false);
+      },
+      error(err) {
+        console.error('Some network or auth error happened. Not handled yet.');
+      },
+      complete() {
+        console.log('Done loading initial data.')
+      }
     });
   }
 
   setupLive(): void {
-    this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
+    // console.log('settin up live');
+    const self = this;
 
-    this.live$ = this.apollo.subscribe({
-      query: MEASUREMENT_SUBSCRIPTION
-    }).subscribe(({ data }) => {
-      const _in = data as SubDTO;
-      let d = this.data[0].data;
-      let l = this.lineChartLabels;
-      d.shift();
-      d.push(_in.measurement.node.value);
+    this.susbscibeMeasurementService.subscribe().subscribe({
+      next(rs) {
+        // console.log('received::', rs);
+        self.data[0].data.shift();
+        self.data[0].data.push(rs.data.measurement.node.value);
 
-      l.shift();
-      l.push(`${new Date(_in.measurement.node.createdAt).getSeconds()}`);
-
-      Object.assign(this.lineChartLabels, l);
-      Object.assign(this.data[0].data, d);
+        self.lineChartLabels.shift();
+        self.lineChartLabels.push(`${new Date(rs.data.measurement.node.createdAt).getSeconds()}`);
+      },
+      error(err) {
+        console.error('Live error::\n', err);
+      },
+      complete() {
+        console.log('Live completed');
+      }
     });
+
+    // this.susbscibeMeasurementService.subscribe().pipe(map(x => {
+    //   this.data[0].data.shift(); this.data[0].data.push(x.data.measurement.node.value);
+    //   this.lineChartLabels.shift(); this.lineChartLabels.push(`${new Date(x.data.measurement.node.createdAt).getSeconds()}`);
+    // }));
+
+    // this.live$ = this.apollo.subscribe({
+    //   query: MEASUREMENT_SUBSCRIPTION
+    // }).subscribe(({ data }) => {
+    //   const _in = data as SubDTO;
+    //   let d = this.data[0].data;
+    //   let l = this.lineChartLabels;
+    //   d.shift();
+    //   d.push(_in.measurement.node.value);
+
+    //   l.shift();
+    //   l.push(`${new Date(_in.measurement.node.createdAt).getSeconds()}`);
+
+    //   Object.assign(this.lineChartLabels, l);
+    //   Object.assign(this.data[0].data, d);
+    // });
   }
 
   setupRanged(startDate: string): void {
-    this.live$ === undefined ? console.log('LIVE$ IS NULL') : this.live$.unsubscribe();
+    // this.live$ === undefined ? console.log('LIVE$ IS NULL') : this.live$.unsubscribe();
 
-    this.data[0].data.length = 0;
-    this.lineChartLabels.length = 0;
+    // this.data[0].data.length = 0;
+    // this.lineChartLabels.length = 0;
 
-    this.chartLoading = true;
-    this.chartLoadingProgress = 0;
+    // this.chartLoading = true;
+    // this.chartLoadingProgress = 0;
 
-    this.ranged$ = this.apollo.watchQuery({
-      query: QUERY_DAY,
-      variables: {
-        startDate: new Date(`${startDate}T00:00:00.000Z`),
-        endDate: new Date(`${startDate}T23:59:59.999Z`),
-      },
-      fetchPolicy: 'network-only'
-    }).valueChanges.pipe(first()).subscribe(({ data }) => {
-      // const _in = data as QueryDayDTO;
-      // this.chartLoadingProgressMax = _in.measurementsConnection.aggregate.count;
-      this.worker.postMessage(data);
-      // this.chartLoading = false;
-    });
+    // this.ranged$ = this.apollo.watchQuery({
+    //   query: QUERY_DAY,
+    //   variables: {
+    //     startDate: new Date(`${startDate}T00:00:00.000Z`),
+    //     endDate: new Date(`${startDate}T23:59:59.999Z`),
+    //   },
+    //   fetchPolicy: 'network-only'
+    // }).valueChanges.pipe(first()).subscribe(({ data }) => {
+    //   // const _in = data as QueryDayDTO;
+    //   // this.chartLoadingProgressMax = _in.measurementsConnection.aggregate.count;
+    //   this.worker.postMessage(data);
+    //   // this.chartLoading = false;
+    // });
   }
 
   setLive() {
-    this.data[0].data.length = 0;
-    this.lineChartLabels.length = 0;
-    this.ngAfterViewInit();
-  }
-
-  setupWebWorker() {
-    if (typeof Worker !== 'undefined') {
-      // Create a new
-
-      this.worker.onmessage = ({ data }) => {
-        this.chartLoading = false;
-
-        const rs = data as IDTOWebWorker;
-        this.data[0].data = rs.data;
-        this.lineChartLabels = rs.labels;
-      };
-    } else {
-      // Web Workers are not supported in this environment.
-      // You should add a fallback so that your program still executes correctly.
-      console.warn('Web workers not supported');
-    }
+    // this.data[0].data.length = 0;
+    // this.lineChartLabels.length = 0;
+    // this.ngAfterViewInit();
   }
 
   // events
@@ -209,9 +205,6 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
-    this.live$ === undefined ? null : this.live$.unsubscribe();
-    this.initial$ === undefined ? null : this.initial$.unsubscribe();
-    this.ranged$ === undefined ? null : this.ranged$.unsubscribe();
   }
 
 }

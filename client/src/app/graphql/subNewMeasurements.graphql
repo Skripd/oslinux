@@ -1,0 +1,9 @@
+subscription subscribeToNewMeasurements{
+    measurement {
+        node {
+            id
+            createdAt
+            value
+        }
+    }
+}

@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, LOCALE_ID } from '@angular/core';
+import { NgModule, LOCALE_ID, ApplicationRef } from '@angular/core';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -12,78 +12,75 @@ import { ChartsModule } from 'ng2-charts';
 import { HomepageComponent } from './homepage/homepage.component';
 import { NotfoundpageComponent } from './notfoundpage/notfoundpage.component';
 import { HttpClientModule } from '@angular/common/http';
-import { WebSocketLink } from 'apollo-link-ws';
-import { HttpLink, HttpLinkModule } from 'apollo-angular-link-http';
-import { Apollo, ApolloModule } from 'apollo-angular';
-import { split } from 'apollo-link';
-import { getMainDefinition } from 'apollo-utilities';
-import { InMemoryCache } from 'apollo-cache-inmemory';
-import { ReversePipe } from './reverse.pipe';
+import { HttpLinkModule } from 'apollo-angular-link-http';
+import { ApolloModule } from 'apollo-angular';
 import { GraphPageComponent } from './graph-page/graph-page.component';
 import { LineChartComponent } from './line-chart/line-chart.component';
 import { ReactiveFormsModule } from '@angular/forms';
 import { registerLocaleData } from '@angular/common';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
+import { KeycloakAngularModule, KeycloakService } from 'keycloak-angular';
+import { ReversePipe } from './reverse.pipe';
+import { LoaderHackForApolloComponent } from './loader-hack-for-apollo/loader-hack-for-apollo.component';
+
+const keycloakService = new KeycloakService();
 
 @NgModule({
   declarations: [
     AppComponent,
     HomepageComponent,
     NotfoundpageComponent,
-    ReversePipe,
     GraphPageComponent,
-    LineChartComponent
+    LineChartComponent,
+    ReversePipe,
+    LoaderHackForApolloComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
+    HttpClientModule,
+    KeycloakAngularModule,
+    HttpLinkModule,
+    ApolloModule,
     ClarityModule,
     BrowserAnimationsModule,
-    HttpClientModule,
-    ApolloModule,
-    HttpLinkModule,
     ChartsModule,
     ReactiveFormsModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
   ],
   providers: [
-    { provide: LOCALE_ID, useValue: 'en-NL' }
+    { provide: LOCALE_ID, useValue: 'en-NL' },
+    {
+      provide: KeycloakService,
+      useValue: keycloakService
+    },
   ],
-  bootstrap: [AppComponent]
+  entryComponents: [AppComponent],
 })
 export class AppModule {
-  constructor(apollo: Apollo, httpLink: HttpLink) {
-    // Create an http link:
-    const http = httpLink.create({
-      uri: 'http://localhost:4466/'
-    });
-
-    // Create a WebSocket link:
-    const ws = new WebSocketLink({
-      uri: `ws://localhost:4466/`,
-      options: {
-        reconnect: true
-      }
-    });
-
-    // using the ability to split links, you can send data to each link
-    // depending on what kind of operation is being sent
-    const link = split(
-      // split based on operation type
-      ({ query }) => {
-        const definition = getMainDefinition(query);
-        return definition.kind === 'OperationDefinition' && definition.operation === 'subscription';
-      },
-      ws,
-      http,
-    );
-
-    apollo.create({
-      link,
-      cache: new InMemoryCache(),
-    });
-
+  // Defer bootstrapping until keycloak has initialized.
+  ngDoBootstrap(appRef: ApplicationRef) {
     registerLocaleData(localeNL);
+    keycloakService
+      .init({
+        initOptions: {
+          onLoad: 'check-sso',
+          enableLogging: true,
+          silentCheckSsoRedirectUri: window.location.origin + '/assets/silent-check-sso.html'
+        },
+        config: {
+          clientId: 'oslinux-client',
+          realm: 'oslinux',
+          url: 'http://localhost:8080/auth',
+        }
+      })
+      .then((loggedin) => {
+        console.log(`[NgDoBootstrap] Keycloak initialized Bootstrapping App`);
+        loggedin ? appRef.bootstrap(AppComponent) : keycloakService.login({
+          redirectUri: window.location.origin + '/',
+        });
+      })
+      .catch(error => console.error(`[NgDoBootstrap] Keycloak Initializer Failed`, error));
   }
 }

@@ -3,12 +3,8 @@ import { ChartDataSets, ChartOptions } from 'chart.js';
 import { Label, Color, BaseChartDirective } from 'ng2-charts';
 import * as pluginAnnotations from 'chartjs-plugin-annotation';
 import { Subscription } from 'rxjs';
-import { first } from 'rxjs/operators';
 import * as _ from 'lodash';
 import { Apollo } from 'apollo-angular';
-import { QUERY_PAGED, MEASUREMENT_SUBSCRIPTION } from '../.models/queries';
-import { QueryPagedDTO, SubDTO } from '../.models/DTOS.model';
-import { Measurement } from '../.models/measurement.model';
 
 @Component({
   selector: 'app-line-chart',
@@ -90,43 +86,11 @@ export class LineChartComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.initial$ = this.apollo.subscribe({
-      query: QUERY_PAGED,
-      variables: { before: null, from: 0, to: 60 }
-    }).pipe(first()).subscribe(({ data }) => {
-      console.log('initial');
-      const _in = data as QueryPagedDTO;
-      const d: number[] = [];
-      const l: string[] = [];
 
-      _in.measurements.forEach(m => {
-        d.push(m.value);
-        l.push(`${new Date(m.createdAt).getSeconds()}`);
-      });
-
-      Object.assign(this.measurements, d);
-      Object.assign(this.lineChartLabels, l);
-      this.setupLive();
-      this.loading = false;
-    });
   }
 
   setupLive(): void {
-    this.live$ = this.apollo.subscribe({
-      query: MEASUREMENT_SUBSCRIPTION
-    }).subscribe(({ data }) => {
-      const _in = data as SubDTO;
-      let d = this.measurements;
-      let l = this.lineChartLabels;
-      d.shift();
-      d.push(_in.measurement.node.value);
 
-      l.shift();
-      l.push(`${new Date(_in.measurement.node.createdAt).getSeconds()}`);
-
-      Object.assign(this.lineChartLabels, l);
-      Object.assign(this.measurements, d);
-    });
   }
 
   // events

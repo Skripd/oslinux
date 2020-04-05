@@ -1,0 +1,7 @@
+query getPage($before: String, $from: Int!, $to: Int!) {
+  measurements(before: $before, skip: $from, last: $to) {
+    id
+    value
+    createdAt
+  }
+}

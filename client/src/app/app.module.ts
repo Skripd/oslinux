@@ -6,6 +6,8 @@ import { AppComponent } from './app.component';
 import { ClarityModule } from '@clr/angular';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
+import { ColorPickerModule } from 'ngx-color-picker';
+
 import localeNL from '@angular/common/locales/en-NL';
 import { ChartsModule } from 'ng2-charts';
 
@@ -47,6 +49,7 @@ const keycloakService = new KeycloakService();
     BrowserAnimationsModule,
     ChartsModule,
     ReactiveFormsModule,
+    ColorPickerModule,
     ServiceWorkerModule.register('ngsw-worker.js', { enabled: environment.production }),
   ],
   providers: [

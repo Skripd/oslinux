@@ -6,6 +6,10 @@ export const typeDefs = /* GraphQL */ `type AggregateMeasurement {
   count: Int!
 }
 
+type AggregateUserState {
+  count: Int!
+}
+
 type BatchPayload {
   count: Long!
 }
@@ -120,6 +124,12 @@ type Mutation {
   upsertMeasurement(where: MeasurementWhereUniqueInput!, create: MeasurementCreateInput!, update: MeasurementUpdateInput!): Measurement!
   deleteMeasurement(where: MeasurementWhereUniqueInput!): Measurement
   deleteManyMeasurements(where: MeasurementWhereInput): BatchPayload!
+  createUserState(data: UserStateCreateInput!): UserState!
+  updateUserState(data: UserStateUpdateInput!, where: UserStateWhereUniqueInput!): UserState
+  updateManyUserStates(data: UserStateUpdateManyMutationInput!, where: UserStateWhereInput): BatchPayload!
+  upsertUserState(where: UserStateWhereUniqueInput!, create: UserStateCreateInput!, update: UserStateUpdateInput!): UserState!
+  deleteUserState(where: UserStateWhereUniqueInput!): UserState
+  deleteManyUserStates(where: UserStateWhereInput): BatchPayload!
 }
 
 enum MutationType {
@@ -143,10 +153,152 @@ type Query {
   measurement(where: MeasurementWhereUniqueInput!): Measurement
   measurements(where: MeasurementWhereInput, orderBy: MeasurementOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [Measurement]!
   measurementsConnection(where: MeasurementWhereInput, orderBy: MeasurementOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): MeasurementConnection!
+  userState(where: UserStateWhereUniqueInput!): UserState
+  userStates(where: UserStateWhereInput, orderBy: UserStateOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): [UserState]!
+  userStatesConnection(where: UserStateWhereInput, orderBy: UserStateOrderByInput, skip: Int, after: String, before: String, first: Int, last: Int): UserStateConnection!
   node(id: ID!): Node
 }
 
 type Subscription {
   measurement(where: MeasurementSubscriptionWhereInput): MeasurementSubscriptionPayload
+  userState(where: UserStateSubscriptionWhereInput): UserStateSubscriptionPayload
+}
+
+type UserState {
+  id: ID!
+  updatedAt: DateTime!
+  on: Boolean!
+  h: Int!
+  s: Int!
+  v: Int!
+}
+
+type UserStateConnection {
+  pageInfo: PageInfo!
+  edges: [UserStateEdge]!
+  aggregate: AggregateUserState!
+}
+
+input UserStateCreateInput {
+  id: ID
+  on: Boolean!
+  h: Int!
+  s: Int!
+  v: Int!
+}
+
+type UserStateEdge {
+  node: UserState!
+  cursor: String!
+}
+
+enum UserStateOrderByInput {
+  id_ASC
+  id_DESC
+  updatedAt_ASC
+  updatedAt_DESC
+  on_ASC
+  on_DESC
+  h_ASC
+  h_DESC
+  s_ASC
+  s_DESC
+  v_ASC
+  v_DESC
+}
+
+type UserStatePreviousValues {
+  id: ID!
+  updatedAt: DateTime!
+  on: Boolean!
+  h: Int!
+  s: Int!
+  v: Int!
+}
+
+type UserStateSubscriptionPayload {
+  mutation: MutationType!
+  node: UserState
+  updatedFields: [String!]
+  previousValues: UserStatePreviousValues
+}
+
+input UserStateSubscriptionWhereInput {
+  mutation_in: [MutationType!]
+  updatedFields_contains: String
+  updatedFields_contains_every: [String!]
+  updatedFields_contains_some: [String!]
+  node: UserStateWhereInput
+  AND: [UserStateSubscriptionWhereInput!]
+}
+
+input UserStateUpdateInput {
+  on: Boolean
+  h: Int
+  s: Int
+  v: Int
+}
+
+input UserStateUpdateManyMutationInput {
+  on: Boolean
+  h: Int
+  s: Int
+  v: Int
+}
+
+input UserStateWhereInput {
+  id: ID
+  id_not: ID
+  id_in: [ID!]
+  id_not_in: [ID!]
+  id_lt: ID
+  id_lte: ID
+  id_gt: ID
+  id_gte: ID
+  id_contains: ID
+  id_not_contains: ID
+  id_starts_with: ID
+  id_not_starts_with: ID
+  id_ends_with: ID
+  id_not_ends_with: ID
+  updatedAt: DateTime
+  updatedAt_not: DateTime
+  updatedAt_in: [DateTime!]
+  updatedAt_not_in: [DateTime!]
+  updatedAt_lt: DateTime
+  updatedAt_lte: DateTime
+  updatedAt_gt: DateTime
+  updatedAt_gte: DateTime
+  on: Boolean
+  on_not: Boolean
+  h: Int
+  h_not: Int
+  h_in: [Int!]
+  h_not_in: [Int!]
+  h_lt: Int
+  h_lte: Int
+  h_gt: Int
+  h_gte: Int
+  s: Int
+  s_not: Int
+  s_in: [Int!]
+  s_not_in: [Int!]
+  s_lt: Int
+  s_lte: Int
+  s_gt: Int
+  s_gte: Int
+  v: Int
+  v_not: Int
+  v_in: [Int!]
+  v_not_in: [Int!]
+  v_lt: Int
+  v_lte: Int
+  v_gt: Int
+  v_gte: Int
+  AND: [UserStateWhereInput!]
+}
+
+input UserStateWhereUniqueInput {
+  id: ID
 }
 `

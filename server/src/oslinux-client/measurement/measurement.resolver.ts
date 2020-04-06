@@ -6,7 +6,7 @@ import { PermissionsGuard } from 'src/permissions.guard';
 import { Permissions } from 'src/permissions.decorator';
 import { Measurement, BatchPayload } from 'src/prisma/prisma.binding';
 
-@Resolver('Measurement')
+@Resolver()
 export class MeasurementResolver {
     constructor(private readonly prismaService: PrismaService) {}
 
@@ -67,9 +67,10 @@ export class MeasurementResolver {
     }
   
     // @UseGuards(GqlAuthGuard, PermissionsGuard)
-    @Subscription('measurement')
     // @Permissions('oslinux-server:user')
+    @Subscription('measurement')
     onMeasurementMutation(@Args() args, @Info() info) {
+      // console.log('args::\n', JSON.stringify(args), '\n\nINFO::\n', JSON.stringify(info));      
       return this.prismaService.subscription.measurement(args, info);
     }
 }

@@ -3,3 +3,12 @@ type Measurement {
   createdAt: DateTime! @createdAt
   value: Int!
 }
+
+type UserState {
+  id: ID! @id
+  updatedAt: DateTime! @updatedAt
+  on: Boolean!
+  h: Int!
+  s: Int!
+  v: Int!
+}

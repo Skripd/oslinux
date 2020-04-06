@@ -44,6 +44,7 @@
     "keycloak-js": "^9.0.2",
     "lodash": "^4.17.15",
     "ng2-charts": "^2.3.0",
+    "ngx-color-picker": "^9.0.0",
     "rxjs": "~6.5.4",
     "subscriptions-transport-ws": "^0.9.16",
     "tslib": "^1.10.0",

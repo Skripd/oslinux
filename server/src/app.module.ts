@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { GraphQLModule } from '@nestjs/graphql';
 import { GraphqlOptions } from './graphql.options';
 import { MeasurementResolver } from './oslinux-client/measurement/measurement.resolver';
+import { HueControllerService } from './hue-controller/hue-controller.service';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { MeasurementResolver } from './oslinux-client/measurement/measurement.re
     }),
   ],
   controllers: [],
-  providers: [MeasurementResolver],
+  providers: [MeasurementResolver, HueControllerService],
 })
 export class AppModule {}

@@ -35,28 +35,47 @@
             </div>
         </div>
     </div>
-
     <div class="clr-col-lg-3">
-        <div class="card">
-            <div class="card-header">
-                <span>Data selector</span>
+        <div class="clr-row">
+            <div class="clr-col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Data selector</span>
+                    </div>
+                    <div class="card-block">
+                        <form clrForm [formGroup]="dateForm" novalidate>
+                            <h4>Pick a Date</h4>
+                            <clr-date-container>
+                                <label for="startDateControl">Date</label>
+                                <input id="startDateControl" type="date" clrDate formControlName="startDate" />
+                            </clr-date-container>
+                        </form>
+                        <!-- <form clrForm [formGroup]="dateForm" novalidate>
+                            <h4>End Date</h4>
+                            <clr-date-container>
+                                <label for="endDateControl">Date</label>
+                                <input id="endDateControl" type="date" clrDate formControlName="endDate" />
+                            </clr-date-container>
+                        </form> -->
+                    </div>
+                </div>
             </div>
-            <div class="card-block">
-                <form clrForm [formGroup]="dateForm" novalidate>
-                    <h4>Pick a Date</h4>
-                    <clr-date-container>
-                        <label for="startDateControl">Date</label>
-                        <input id="startDateControl" type="date" clrDate formControlName="startDate" />
-                    </clr-date-container>
-                </form>
-                <!-- <form clrForm [formGroup]="dateForm" novalidate>
-                    <h4>End Date</h4>
-                    <clr-date-container>
-                        <label for="endDateControl">Date</label>
-                        <input id="endDateControl" type="date" clrDate formControlName="endDate" />
-                    </clr-date-container>
-                </form> -->
-            </div>
+            <div class="clr-col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <span>Color selector</span>
+                    </div>
+                    <div class="card-block">
+                        <input  [value]="color"
+                                [style.background]="color"
+                                [cpOutputFormat]="'hsla'"
+                                [(colorPicker)]="color"
+                                [cpAlphaChannel]="'disabled'"
+                                [cpPosition]="'left'"
+                                />
+                    </div>
+                </div>
+            </div>    
         </div>
     </div>
 </div>

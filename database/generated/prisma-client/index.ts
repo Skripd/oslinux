@@ -17,6 +17,7 @@ export type Maybe<T> = T | undefined | null;
 
 export interface Exists {
   measurement: (where?: MeasurementWhereInput) => Promise<boolean>;
+  userState: (where?: UserStateWhereInput) => Promise<boolean>;
 }
 
 export interface Node {}
@@ -59,6 +60,25 @@ export interface Prisma {
     first?: Int;
     last?: Int;
   }) => MeasurementConnectionPromise;
+  userState: (where: UserStateWhereUniqueInput) => UserStateNullablePromise;
+  userStates: (args?: {
+    where?: UserStateWhereInput;
+    orderBy?: UserStateOrderByInput;
+    skip?: Int;
+    after?: String;
+    before?: String;
+    first?: Int;
+    last?: Int;
+  }) => FragmentableArray<UserState>;
+  userStatesConnection: (args?: {
+    where?: UserStateWhereInput;
+    orderBy?: UserStateOrderByInput;
+    skip?: Int;
+    after?: String;
+    before?: String;
+    first?: Int;
+    last?: Int;
+  }) => UserStateConnectionPromise;
   node: (args: { id: ID_Output }) => Node;
 
   /**
@@ -83,6 +103,22 @@ export interface Prisma {
   deleteManyMeasurements: (
     where?: MeasurementWhereInput
   ) => BatchPayloadPromise;
+  createUserState: (data: UserStateCreateInput) => UserStatePromise;
+  updateUserState: (args: {
+    data: UserStateUpdateInput;
+    where: UserStateWhereUniqueInput;
+  }) => UserStatePromise;
+  updateManyUserStates: (args: {
+    data: UserStateUpdateManyMutationInput;
+    where?: UserStateWhereInput;
+  }) => BatchPayloadPromise;
+  upsertUserState: (args: {
+    where: UserStateWhereUniqueInput;
+    create: UserStateCreateInput;
+    update: UserStateUpdateInput;
+  }) => UserStatePromise;
+  deleteUserState: (where: UserStateWhereUniqueInput) => UserStatePromise;
+  deleteManyUserStates: (where?: UserStateWhereInput) => BatchPayloadPromise;
 
   /**
    * Subscriptions
@@ -95,6 +131,9 @@ export interface Subscription {
   measurement: (
     where?: MeasurementSubscriptionWhereInput
   ) => MeasurementSubscriptionPayloadSubscription;
+  userState: (
+    where?: UserStateSubscriptionWhereInput
+  ) => UserStateSubscriptionPayloadSubscription;
 }
 
 export interface ClientConstructor<T> {
@@ -112,6 +151,20 @@ export type MeasurementOrderByInput =
   | "createdAt_DESC"
   | "value_ASC"
   | "value_DESC";
+
+export type UserStateOrderByInput =
+  | "id_ASC"
+  | "id_DESC"
+  | "updatedAt_ASC"
+  | "updatedAt_DESC"
+  | "on_ASC"
+  | "on_DESC"
+  | "h_ASC"
+  | "h_DESC"
+  | "s_ASC"
+  | "s_DESC"
+  | "v_ASC"
+  | "v_DESC";
 
 export type MutationType = "CREATED" | "UPDATED" | "DELETED";
 
@@ -153,6 +206,62 @@ export interface MeasurementWhereInput {
   AND?: Maybe<MeasurementWhereInput[] | MeasurementWhereInput>;
 }
 
+export type UserStateWhereUniqueInput = AtLeastOne<{
+  id: Maybe<ID_Input>;
+}>;
+
+export interface UserStateWhereInput {
+  id?: Maybe<ID_Input>;
+  id_not?: Maybe<ID_Input>;
+  id_in?: Maybe<ID_Input[] | ID_Input>;
+  id_not_in?: Maybe<ID_Input[] | ID_Input>;
+  id_lt?: Maybe<ID_Input>;
+  id_lte?: Maybe<ID_Input>;
+  id_gt?: Maybe<ID_Input>;
+  id_gte?: Maybe<ID_Input>;
+  id_contains?: Maybe<ID_Input>;
+  id_not_contains?: Maybe<ID_Input>;
+  id_starts_with?: Maybe<ID_Input>;
+  id_not_starts_with?: Maybe<ID_Input>;
+  id_ends_with?: Maybe<ID_Input>;
+  id_not_ends_with?: Maybe<ID_Input>;
+  updatedAt?: Maybe<DateTimeInput>;
+  updatedAt_not?: Maybe<DateTimeInput>;
+  updatedAt_in?: Maybe<DateTimeInput[] | DateTimeInput>;
+  updatedAt_not_in?: Maybe<DateTimeInput[] | DateTimeInput>;
+  updatedAt_lt?: Maybe<DateTimeInput>;
+  updatedAt_lte?: Maybe<DateTimeInput>;
+  updatedAt_gt?: Maybe<DateTimeInput>;
+  updatedAt_gte?: Maybe<DateTimeInput>;
+  on?: Maybe<Boolean>;
+  on_not?: Maybe<Boolean>;
+  h?: Maybe<Int>;
+  h_not?: Maybe<Int>;
+  h_in?: Maybe<Int[] | Int>;
+  h_not_in?: Maybe<Int[] | Int>;
+  h_lt?: Maybe<Int>;
+  h_lte?: Maybe<Int>;
+  h_gt?: Maybe<Int>;
+  h_gte?: Maybe<Int>;
+  s?: Maybe<Int>;
+  s_not?: Maybe<Int>;
+  s_in?: Maybe<Int[] | Int>;
+  s_not_in?: Maybe<Int[] | Int>;
+  s_lt?: Maybe<Int>;
+  s_lte?: Maybe<Int>;
+  s_gt?: Maybe<Int>;
+  s_gte?: Maybe<Int>;
+  v?: Maybe<Int>;
+  v_not?: Maybe<Int>;
+  v_in?: Maybe<Int[] | Int>;
+  v_not_in?: Maybe<Int[] | Int>;
+  v_lt?: Maybe<Int>;
+  v_lte?: Maybe<Int>;
+  v_gt?: Maybe<Int>;
+  v_gte?: Maybe<Int>;
+  AND?: Maybe<UserStateWhereInput[] | UserStateWhereInput>;
+}
+
 export interface MeasurementCreateInput {
   id?: Maybe<ID_Input>;
   value: Int;
@@ -166,6 +275,28 @@ export interface MeasurementUpdateManyMutationInput {
   value?: Maybe<Int>;
 }
 
+export interface UserStateCreateInput {
+  id?: Maybe<ID_Input>;
+  on: Boolean;
+  h: Int;
+  s: Int;
+  v: Int;
+}
+
+export interface UserStateUpdateInput {
+  on?: Maybe<Boolean>;
+  h?: Maybe<Int>;
+  s?: Maybe<Int>;
+  v?: Maybe<Int>;
+}
+
+export interface UserStateUpdateManyMutationInput {
+  on?: Maybe<Boolean>;
+  h?: Maybe<Int>;
+  s?: Maybe<Int>;
+  v?: Maybe<Int>;
+}
+
 export interface MeasurementSubscriptionWhereInput {
   mutation_in?: Maybe<MutationType[] | MutationType>;
   updatedFields_contains?: Maybe<String>;
@@ -174,6 +305,17 @@ export interface MeasurementSubscriptionWhereInput {
   node?: Maybe<MeasurementWhereInput>;
   AND?: Maybe<
     MeasurementSubscriptionWhereInput[] | MeasurementSubscriptionWhereInput
+  >;
+}
+
+export interface UserStateSubscriptionWhereInput {
+  mutation_in?: Maybe<MutationType[] | MutationType>;
+  updatedFields_contains?: Maybe<String>;
+  updatedFields_contains_every?: Maybe<String[] | String>;
+  updatedFields_contains_some?: Maybe<String[] | String>;
+  node?: Maybe<UserStateWhereInput>;
+  AND?: Maybe<
+    UserStateSubscriptionWhereInput[] | UserStateSubscriptionWhereInput
   >;
 }
 
@@ -288,6 +430,102 @@ export interface AggregateMeasurementSubscription
   count: () => Promise<AsyncIterator<Int>>;
 }
 
+export interface UserState {
+  id: ID_Output;
+  updatedAt: DateTimeOutput;
+  on: Boolean;
+  h: Int;
+  s: Int;
+  v: Int;
+}
+
+export interface UserStatePromise extends Promise<UserState>, Fragmentable {
+  id: () => Promise<ID_Output>;
+  updatedAt: () => Promise<DateTimeOutput>;
+  on: () => Promise<Boolean>;
+  h: () => Promise<Int>;
+  s: () => Promise<Int>;
+  v: () => Promise<Int>;
+}
+
+export interface UserStateSubscription
+  extends Promise<AsyncIterator<UserState>>,
+    Fragmentable {
+  id: () => Promise<AsyncIterator<ID_Output>>;
+  updatedAt: () => Promise<AsyncIterator<DateTimeOutput>>;
+  on: () => Promise<AsyncIterator<Boolean>>;
+  h: () => Promise<AsyncIterator<Int>>;
+  s: () => Promise<AsyncIterator<Int>>;
+  v: () => Promise<AsyncIterator<Int>>;
+}
+
+export interface UserStateNullablePromise
+  extends Promise<UserState | null>,
+    Fragmentable {
+  id: () => Promise<ID_Output>;
+  updatedAt: () => Promise<DateTimeOutput>;
+  on: () => Promise<Boolean>;
+  h: () => Promise<Int>;
+  s: () => Promise<Int>;
+  v: () => Promise<Int>;
+}
+
+export interface UserStateConnection {
+  pageInfo: PageInfo;
+  edges: UserStateEdge[];
+}
+
+export interface UserStateConnectionPromise
+  extends Promise<UserStateConnection>,
+    Fragmentable {
+  pageInfo: <T = PageInfoPromise>() => T;
+  edges: <T = FragmentableArray<UserStateEdge>>() => T;
+  aggregate: <T = AggregateUserStatePromise>() => T;
+}
+
+export interface UserStateConnectionSubscription
+  extends Promise<AsyncIterator<UserStateConnection>>,
+    Fragmentable {
+  pageInfo: <T = PageInfoSubscription>() => T;
+  edges: <T = Promise<AsyncIterator<UserStateEdgeSubscription>>>() => T;
+  aggregate: <T = AggregateUserStateSubscription>() => T;
+}
+
+export interface UserStateEdge {
+  node: UserState;
+  cursor: String;
+}
+
+export interface UserStateEdgePromise
+  extends Promise<UserStateEdge>,
+    Fragmentable {
+  node: <T = UserStatePromise>() => T;
+  cursor: () => Promise<String>;
+}
+
+export interface UserStateEdgeSubscription
+  extends Promise<AsyncIterator<UserStateEdge>>,
+    Fragmentable {
+  node: <T = UserStateSubscription>() => T;
+  cursor: () => Promise<AsyncIterator<String>>;
+}
+
+export interface AggregateUserState {
+  count: Int;
+}
+
+export interface AggregateUserStatePromise
+  extends Promise<AggregateUserState>,
+    Fragmentable {
+  count: () => Promise<Int>;
+}
+
+export interface AggregateUserStateSubscription
+  extends Promise<AsyncIterator<AggregateUserState>>,
+    Fragmentable {
+  count: () => Promise<AsyncIterator<Int>>;
+}
+
 export interface BatchPayload {
   count: Long;
 }
@@ -351,6 +589,62 @@ export interface MeasurementPreviousValuesSubscription
   value: () => Promise<AsyncIterator<Int>>;
 }
 
+export interface UserStateSubscriptionPayload {
+  mutation: MutationType;
+  node: UserState;
+  updatedFields: String[];
+  previousValues: UserStatePreviousValues;
+}
+
+export interface UserStateSubscriptionPayloadPromise
+  extends Promise<UserStateSubscriptionPayload>,
+    Fragmentable {
+  mutation: () => Promise<MutationType>;
+  node: <T = UserStatePromise>() => T;
+  updatedFields: () => Promise<String[]>;
+  previousValues: <T = UserStatePreviousValuesPromise>() => T;
+}
+
+export interface UserStateSubscriptionPayloadSubscription
+  extends Promise<AsyncIterator<UserStateSubscriptionPayload>>,
+    Fragmentable {
+  mutation: () => Promise<AsyncIterator<MutationType>>;
+  node: <T = UserStateSubscription>() => T;
+  updatedFields: () => Promise<AsyncIterator<String[]>>;
+  previousValues: <T = UserStatePreviousValuesSubscription>() => T;
+}
+
+export interface UserStatePreviousValues {
+  id: ID_Output;
+  updatedAt: DateTimeOutput;
+  on: Boolean;
+  h: Int;
+  s: Int;
+  v: Int;
+}
+
+export interface UserStatePreviousValuesPromise
+  extends Promise<UserStatePreviousValues>,
+    Fragmentable {
+  id: () => Promise<ID_Output>;
+  updatedAt: () => Promise<DateTimeOutput>;
+  on: () => Promise<Boolean>;
+  h: () => Promise<Int>;
+  s: () => Promise<Int>;
+  v: () => Promise<Int>;
+}
+
+export interface UserStatePreviousValuesSubscription
+  extends Promise<AsyncIterator<UserStatePreviousValues>>,
+    Fragmentable {
+  id: () => Promise<AsyncIterator<ID_Output>>;
+  updatedAt: () => Promise<AsyncIterator<DateTimeOutput>>;
+  on: () => Promise<AsyncIterator<Boolean>>;
+  h: () => Promise<AsyncIterator<Int>>;
+  s: () => Promise<AsyncIterator<Int>>;
+  v: () => Promise<AsyncIterator<Int>>;
+}
+
 /*
 The `ID` scalar type represents a unique identifier, often used to refetch an object or as key for a cache. The ID type appears in a JSON response as a String; however, it is not intended to be human-readable. When expected as an input type, any string (such as `"4"`) or integer (such as `4`) input value will be accepted as an ID.
 */
@@ -391,6 +685,10 @@ export type Long = string;
 export const models: Model[] = [
   {
     name: "Measurement",
+    embedded: false
+  },
+  {
+    name: "UserState",
     embedded: false
   }
 ];

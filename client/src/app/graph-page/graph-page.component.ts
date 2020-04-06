@@ -7,9 +7,9 @@ import * as pluginAnnotations from 'chartjs-plugin-annotation';
 import { Label, Color, BaseChartDirective } from 'ng2-charts';
 
 import { GetLastMeasurementsGQL, SubscribeToNewMeasurementsGQL } from 'src/app/generated/graphql';
-
 import * as _ from 'lodash';
-import { map } from 'rxjs/operators';
+
+import { Hsla } from 'ngx-color-picker';
 
 @Component({
   selector: 'app-graph-page',
@@ -75,6 +75,8 @@ export class GraphPageComponent implements OnInit, OnDestroy, AfterViewInit {
   public lineChartLegend = true;
   public lineChartType = 'line';
   public lineChartPlugins = [pluginAnnotations];
+
+  public color: Hsla;
 
   @ViewChild(BaseChartDirective, { static: true }) chart: BaseChartDirective;
 
